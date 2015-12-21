@@ -1,0 +1,63 @@
+%define _upstream_name {{ name }}
+%define _name          {{ name|lower }}
+%define version        {{ version }}
+%define __python       /usr/bin/%{PYTHON_PREFIX}%{BLUEPYTHON_VERSION}
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
+%{!?python_bindir: %global python_bindir %(readlink -f %{python_sitelib}/../../../bin)}
+%{!?python_libdir: %global python_libdir %(readlink -f %{python_sitelib}/../..)}
+
+%if 0%{?PYTHON_VERSION} >= 3
+%global _python3 1
+%else
+%global _python3 0
+%endif
+
+Summary: {{ summary }}
+Name: %{PYTHON_PREFIX}%{PYTHON_VERSION}-%{_name}
+Version: %{version}
+Release: 1%{?dist}
+Source0: {{ source }}
+License: {{ license }}
+Group: Development/Libraries
+BuildRoot: %{_tmppath}/%{_name}-%{version}-%{release}-buildroot
+Prefix: %{_prefix}
+BuildArch: noarch
+Vendor: {{ author }}
+Url: {{ url }}
+Requires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-devel
+%if !0%{?_python3}
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-setuptools
+%endif
+{% for requirement in requires %}
+Requires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-{{requirement}}
+{% endfor %}
+
+%description
+{{ description }}
+
+%prep
+%setup -qn %{_upstream_name}-%{version}
+
+%build
+export LDFLAGS="-L%{python_libdir}"
+export CFLAGS="$RPM_OPT_FLAGS"
+%{__python} setup.py build
+
+%install
+%{__python} setup.py install -O1 --single-version-externally-managed --root=$RPM_BUILD_ROOT
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%{python_sitelib}
+{% if has_bin == True %}
+%{python_bindir}
+{% endif %}
+
+%changelog
+* {{ date }} {{ me }}  <{{ email }}> - {{ version }}-1
+- Initial Release
