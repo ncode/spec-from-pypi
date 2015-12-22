@@ -3,22 +3,84 @@ __version__ = '1.0.0'
 
 import os
 import requests
+import requirements
+import shutil
+import subprocess
 import sys
+import tarfile
+import tempfile
 
 from datetime import date
+from glob import glob
 from jinja2 import Environment, FileSystemLoader
+from uuid import uuid4
+
+from pkg_resources import RequirementParseError
+
+def find_dependencies(directory):
+    cwd = os.getcwd()
+    os.chdir(directory)
+    subprocess.check_output([sys.executable, 'setup.py', 'egg_info'])
+
+    dependencies = set()
+    for _requirements in glob('{}/*.egg-info/requires.txt'.format(directory)):
+        with open(_requirements, 'r') as f:
+            try:
+                for req in requirements.parse(f):
+                    if req.specs:
+                        dependencies.add('{}{}'.format(req.name,
+                            ''.join([ '{}{}'.format(o, v)
+                                      for o,v in req.specs])))
+                    else:
+                        dependencies.add(req.name)
+            except RequirementParseError:
+                pass
+            finally:
+                os.chdir(cwd)
+                shutil.rmtree(directory)
+
+    os.chdir(cwd)
+    return dependencies
+
+def extract_files(_file):
+    def extract_tar(_file, tmpdir):
+        tar = tarfile.open(_file)
+        os.makedirs(tmpdir)
+        os.chdir(tmpdir)
+        tar.extractall()
+
+    name, extension = os.path.splitext(_file)
+    if extension == '.gz':
+        _, _extension = os.path.splitext(name)
+        extension = '{}{}'.format(_extension, extension)
+        name = name.replace(_extension, '')
+    tmpdir = "{}/{}".format(tempfile.gettempdir(), uuid4())
+    cwd = os.getcwd()
+
+    if extension in ['.tar.gz', '.tgz']:
+        extract_tar(_file, tmpdir)
+
+    os.chdir(cwd)
+    return os.path.join(tmpdir, name)
 
 
 def create(meta):
+    os.mkdir(meta['name'])
+    print('Downloading {}'.format(meta['source']))
+    _file = download_file(meta['source'])
+    print('Extracting {}'.format(_file))
+    extracted = extract_files(_file)
+    print('Searching for extra dependencies on {}'.format(extracted))
+    extra_deps = find_dependencies(extracted)
+    meta['requires'].extend(extra_deps)
+
     env = Environment(loader=FileSystemLoader('{}/templates'.format(
             os.path.dirname(os.path.abspath(__file__)))))
     spec = env.get_template('python-spec.tmpl')
     rendered = spec.render(meta)
-    os.mkdir(meta['name'])
-    with open('{name}/{name}.spec'.format(name=meta['name']), 'w') as spec_file:
-        spec_file.write(rendered)
+    with open('{name}/{name}.spec'.format(name=meta['name']), 'w') as spec:
+        spec.write(rendered)
     os.chdir(meta['name'])
-    download_file(meta['source'])
 
 
 def download_file(url):
@@ -33,6 +95,7 @@ def download_file(url):
 
 
 def build_metadata(pypi):
+    print('Building metadata for the package genaration...')
     meta = {'name': pypi['info']['name']}
     meta.update({'source':
         next((url['url'] for url in pypi['urls']
@@ -43,7 +106,8 @@ def build_metadata(pypi):
     })
     if meta['source'] == '':
         print("Cannot determine download URL... "
-              "Check Pypi: https://pypi.python.org/pypi/{}/".format(meta['name']))
+              "Check Pypi: https://pypi.python.org/pypi/{}/"
+              .format(meta['name']))
         sys.exit(3)
 
     meta.update(
@@ -67,6 +131,7 @@ def build_metadata(pypi):
 
 
 def read_pypi(name, version=None):
+    print('Trying to fetch pypi information about {}...'.format(name))
     if not version:
         url = "https://pypi.python.org/pypi/{}/json".format(name)
     else:

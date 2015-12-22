@@ -25,14 +25,15 @@ BuildArch: noarch
 Vendor: {{ author }}
 Url: {{ url }}
 Requires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-devel
-%if !0%{?_python3}
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-setuptools
-%endif
-{% for requirement in requires %}
+{% for requirement in requires -%}
 Requires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-{{requirement}}
-{% endfor %}
+{% endfor -%}
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
+{% for requirement in requires -%}
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-{{requirement}}
+{% endfor -%}
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-devel
+BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-setuptools
 
 %description
 {{ description }}
@@ -61,3 +62,4 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * {{ date }} {{ me }}  <{{ email }}> - {{ version }}-1
 - Initial Release
+

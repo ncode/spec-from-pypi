@@ -9,6 +9,7 @@ setup(
     name='specfrompypi',
     version=version,
     install_requires=['Jinja2>=2.8',
+                      'requirements-parser>=0.0.4',
                       'requests>=2.7.0'],
     description='Python utility to create spec files from pypi',
     author='Juliano Martinez',
