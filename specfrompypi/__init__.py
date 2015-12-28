@@ -65,22 +65,25 @@ def extract_files(_file):
 
 
 def create(meta):
-    os.mkdir(meta['name'])
+    os.mkdir(meta['package_name'])
     print('Downloading {}'.format(meta['source']))
+    cwd = os.getcwd()
+    os.chdir(meta['package_name'])
     _file = download_file(meta['source'])
     print('Extracting {}'.format(_file))
     extracted = extract_files(_file)
     print('Searching for extra dependencies on {}'.format(extracted))
     extra_deps = find_dependencies(extracted)
     meta['requires'].extend(extra_deps)
+    os.chdir(cwd)
 
     env = Environment(loader=FileSystemLoader('{}/templates'.format(
             os.path.dirname(os.path.abspath(__file__)))))
     spec = env.get_template('python-spec.tmpl')
     rendered = spec.render(meta)
-    with open('{name}/{name}.spec'.format(name=meta['name']), 'w') as spec:
+    with open('{name}/{name}.spec'.format(name=meta['package_name']), 'w') as spec:
         spec.write(rendered)
-    os.chdir(meta['name'])
+
 
 
 def download_file(url):
@@ -148,10 +151,13 @@ def read_pypi(name, version=None):
 
 def main():
     name = sys.argv[1]
+    python_prefix = sys.argv[2]
     if os.path.isdir(name):
         print("Package {} alreayd exists".format(name))
         sys.exit(1)
 
     meta = read_pypi(name)
+    meta.update({'python_prefix': python_prefix})
+    meta.update({'package_name': '{}-{}'.format(python_prefix, name)})
     create(meta)
     sys.exit(0)
