@@ -83,7 +83,8 @@ def create(meta):
             os.path.dirname(os.path.abspath(__file__)))))
     spec = env.get_template('python-spec.tmpl')
     rendered = spec.render(meta)
-    with open('{name}/{name}.spec'.format(name=meta['package_name']), 'w') as spec:
+    with open('{name}/{name}.spec'.format(
+            name=meta['package_name']), 'w') as spec:
         spec.write(rendered)
 
 
