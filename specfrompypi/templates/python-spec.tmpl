@@ -13,7 +13,7 @@
 %endif
 
 Summary: {{ summary }}
-Name: %{PYTHON_PREFIX}%{PYTHON_VERSION}-%{_name}
+Name: {{ python_prefix }}-%{_name}
 Version: %{version}
 Release: 1%{?dist}
 Source0: {{ source }}
@@ -24,16 +24,16 @@ Prefix: %{_prefix}
 BuildArch: noarch
 Vendor: {{ author }}
 Url: {{ url }}
-Requires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
+Requires: {{ python_prefix }}
 {% for requirement in requires -%}
-Requires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-{{requirement}}
+Requires: {{ python_prefix }}-{{requirement}}
 {% endfor -%}
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}
+BuildRequires: {{ python_prefix }}
 {% for requirement in requires -%}
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-{{requirement}}
+BuildRequires: {{ python_prefix }}-{{requirement}}
 {% endfor -%}
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-devel
-BuildRequires: %{PYTHON_PREFIX}%{PYTHON_VERSION}-setuptools
+BuildRequires: {{ python_prefix }}-devel
+BuildRequires: {{ python_prefix }}-setuptools
 
 %description
 {{ description }}

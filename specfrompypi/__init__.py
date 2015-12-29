@@ -2,6 +2,7 @@ __author__ = 'jmartinez'
 __version__ = '1.0.0'
 
 import os
+import click
 import requests
 import requirements
 import shutil
@@ -64,23 +65,27 @@ def extract_files(_file):
     return os.path.join(tmpdir, name)
 
 
+
 def create(meta):
-    os.mkdir(meta['name'])
-    print('Downloading {}'.format(meta['source']))
+    os.mkdir(meta['package_name'])
+    click.echo('Downloading {}'.format(meta['source']))
+    cwd = os.getcwd()
+    os.chdir(meta['package_name'])
     _file = download_file(meta['source'])
-    print('Extracting {}'.format(_file))
+    click.echo('Extracting {}'.format(_file))
     extracted = extract_files(_file)
-    print('Searching for extra dependencies on {}'.format(extracted))
+    click.echo('Searching for extra dependencies on {}'.format(extracted))
     extra_deps = find_dependencies(extracted)
     meta['requires'].extend(extra_deps)
+    os.chdir(cwd)
 
     env = Environment(loader=FileSystemLoader('{}/templates'.format(
             os.path.dirname(os.path.abspath(__file__)))))
     spec = env.get_template('python-spec.tmpl')
     rendered = spec.render(meta)
-    with open('{name}/{name}.spec'.format(name=meta['name']), 'w') as spec:
+    with open('{name}/{name}.spec'.format(name=meta['package_name']), 'w') as spec:
         spec.write(rendered)
-    os.chdir(meta['name'])
+
 
 
 def download_file(url):
@@ -95,7 +100,7 @@ def download_file(url):
 
 
 def build_metadata(pypi):
-    print('Building metadata for the package genaration...')
+    click.echo('Building metadata for the package genaration...')
     meta = {'name': pypi['info']['name']}
     meta.update({'source':
         next((url['url'] for url in pypi['urls']
@@ -105,7 +110,7 @@ def build_metadata(pypi):
                  'tar.bz2' in url['url'])), '')
     })
     if meta['source'] == '':
-        print("Cannot determine download URL... "
+        click.echo("Cannot determine download URL... "
               "Check Pypi: https://pypi.python.org/pypi/{}/"
               .format(meta['name']))
         sys.exit(3)
@@ -131,7 +136,7 @@ def build_metadata(pypi):
 
 
 def read_pypi(name, version=None):
-    print('Trying to fetch pypi information about {}...'.format(name))
+    click.echo('Trying to fetch pypi information about {}...'.format(name))
     if not version:
         url = "https://pypi.python.org/pypi/{}/json".format(name)
     else:
@@ -140,18 +145,25 @@ def read_pypi(name, version=None):
     if result.status_code == 200:
         pypi = result.json()
     else:
-        print("Package or release not found on {}".format(url))
+        click.echo("Package or release not found on {}".format(url))
         sys.exit(2)
 
     return build_metadata(pypi)
 
 
-def main():
-    name = sys.argv[1]
+@click.command()
+@click.argument('name')
+@click.option('--python_prefix', '-p', default='python35')
+def run(name, python_prefix):
     if os.path.isdir(name):
-        print("Package {} alreayd exists".format(name))
+        click.echo("Package {} alreayd exists".format(name))
         sys.exit(1)
 
     meta = read_pypi(name)
+    meta.update({'python_prefix': python_prefix})
+    meta.update({'package_name': '{}-{}'.format(python_prefix, name)})
     create(meta)
     sys.exit(0)
+
+if __name__ == '__main__':
+    run()
