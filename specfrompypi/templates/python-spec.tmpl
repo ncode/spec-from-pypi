@@ -1,7 +1,7 @@
 %define _upstream_name {{ name }}
 %define _name          {{ name|lower }}
 %define version        {{ version }}
-%define __python       /usr/bin/%{PYTHON_PREFIX}%{BLUEPYTHON_VERSION}
+%define __python       /usr/bin/python3
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
 %{!?python_bindir: %global python_bindir %(readlink -f %{python_sitelib}/../../../bin)}
 %{!?python_libdir: %global python_libdir %(readlink -f %{python_sitelib}/../..)}
