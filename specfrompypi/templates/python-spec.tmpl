@@ -3,8 +3,12 @@
 %define version        {{ version }}
 %define __python       /usr/bin/python3
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
-%{!?python_bindir: %global python_bindir %(readlink -f %{python_sitelib}/../../../bin)}
-%{!?python_libdir: %global python_libdir %(readlink -f %{python_sitelib}/../..)}
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
+%{!?python_dir: %global python_dir %(readlink -f %{python_sitelib}/../../../.)}
+%{!?python_bindir: %global python_bindir %(readlink -f %{python_dir}/bin)}
+%{!?python_libdir: %global python_libdir %(readlink -f %{python_dir}/lib)}
+%{!?python_share: %global python_share %(readlink -f %{python_dir}/share)}
+%{!?python_mandir: %global python_mandir %(readlink -f %{python_share}/man)}
 
 %if 0%{?PYTHON_VERSION} >= 3
 %global _python3 1
@@ -47,7 +51,11 @@ export CFLAGS="$RPM_OPT_FLAGS"
 %{__python} setup.py build
 
 %install
+{% if single_version_externally_managed == True -%}
 %{__python} setup.py install -O1 --single-version-externally-managed --root=$RPM_BUILD_ROOT
+{% else -%}
+%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
+{% endif %}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -55,7 +63,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %{python_sitelib}
-{% if has_bin == True %}
+{% if has_bin == True -%}
 %{python_bindir}
 {% endif %}
 

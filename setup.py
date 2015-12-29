@@ -17,6 +17,6 @@ setup(
     packages=find_packages('.'),
     package_data={'specfrompypi': ['templates/python-spec.tmpl']},
     entry_points = {
-        'console_scripts': ['spec-from-pypi=specfrompypi:run'],
+        'console_scripts': ['spec-from-pypi=specfrompypi:cli'],
     }
 )
