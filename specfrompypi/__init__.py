@@ -42,8 +42,8 @@ def find_dependencies(directory):
                 try:
                     for req in requirements.parse(f):
                         if req.specs:
-                            dependencies.add('{}{}'.format(req.name,
-                                ''.join([ '{}{}'.format(o, v)
+                            dependencies.add('{} {}'.format(req.name,
+                                ''.join([ '{} {}'.format(o, v)
                                           for o,v in req.specs])))
                         else:
                             dependencies.add(req.name)
@@ -178,12 +178,11 @@ def read_pypi(name, version=None):
 
 
 def run(name, python_prefix, recursive):
-    package_name = '{}-{}'.format(python_prefix, name)
+    meta = read_pypi(name)
+    package_name = '{}-{}'.format(python_prefix, meta['name'])
     if os.path.isdir(package_name):
         click.echo('{} already exists, skipping...'.format(package_name))
         return
-
-    meta = read_pypi(name)
     meta.update({'python_prefix': python_prefix})
     meta.update({'package_name': package_name})
     create(meta)
@@ -193,8 +192,7 @@ def run(name, python_prefix, recursive):
             # Refactor here to actually enfore the version
             dep = dep.replace('>', ' ').replace('<', ' ').\
                     replace('=', '/').split()[0]
-            run(dep)
-
+            run(dep, python_prefix, recursive)
 
 
 @click.command()

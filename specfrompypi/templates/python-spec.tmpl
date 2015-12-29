@@ -1,14 +1,13 @@
-%define _upstream_name {{ name }}
-%define _name          {{ name|lower }}
-%define version        {{ version }}
-%define __python       /usr/bin/python3
+%define _name       {{ name }}
+%define version     {{ version }}
+%define __python    /usr/bin/python3
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())")}
-%{!?python_dir: %global python_dir %(readlink -f %{python_sitelib}/../../../.)}
-%{!?python_bindir: %global python_bindir %(readlink -f %{python_dir}/bin)}
-%{!?python_libdir: %global python_libdir %(readlink -f %{python_dir}/lib)}
-%{!?python_share: %global python_share %(readlink -f %{python_dir}/share)}
-%{!?python_mandir: %global python_mandir %(readlink -f %{python_share}/man)}
+%{!?python_dir:     %global python_dir %(readlink -f %{python_sitelib}/../../../.)}
+%{!?python_bindir:  %global python_bindir %(readlink -f %{python_dir}/bin)}
+%{!?python_libdir:  %global python_libdir %(readlink -f %{python_dir}/lib)}
+%{!?python_share:   %global python_share %(readlink -f %{python_dir}/share)}
+%{!?python_mandir:  %global python_mandir %(readlink -f %{python_share}/man)}
 
 %if 0%{?PYTHON_VERSION} >= 3
 %global _python3 1
@@ -43,7 +42,7 @@ BuildRequires: {{ python_prefix }}-setuptools
 {{ description }}
 
 %prep
-%setup -qn %{_upstream_name}-%{version}
+%setup -qn %{_name}-%{version}
 
 %build
 export LDFLAGS="-L%{python_libdir}"
