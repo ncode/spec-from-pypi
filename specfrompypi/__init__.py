@@ -78,7 +78,7 @@ def extract_files(_file):
     tmpdir = "{}/{}".format(tempfile.gettempdir(), uuid4())
     cwd = os.getcwd()
 
-    if extension in ['.tar.gz', '.tgz']:
+    if extension in ['.tar.gz', '.tgz', '.tar.bz2']:
         extract_tar(_file, tmpdir)
     elif extension == '.zip':
         extract_zip(_file, tmpdir)
@@ -110,7 +110,6 @@ def create(meta):
     with open('{name}/{name}.spec'.format(
             name=meta['package_name']), 'w') as spec:
         spec.write(rendered)
-
 
 
 def download_file(url):
