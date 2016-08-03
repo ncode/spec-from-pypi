@@ -1,5 +1,5 @@
 __author__ = 'jmartinez'
-__version__ = '1.0.0'
+__version__ = '1.0.2'
 
 import os
 import click
@@ -70,7 +70,7 @@ def extract_files(_file):
             _zip.extractall()
 
     name, extension = os.path.splitext(_file)
-    if extension == '.gz':
+    if extension in ['.gz', '.bz2']:
         _, _extension = os.path.splitext(name)
         extension = '{}{}'.format(_extension, extension)
         name = name.replace(_extension, '')
@@ -82,6 +82,8 @@ def extract_files(_file):
         extract_tar(_file, tmpdir)
     elif extension == '.zip':
         extract_zip(_file, tmpdir)
+    else:
+        raise RuntimeError('I dunno how to handle {} files'.format(extension))
 
     os.chdir(cwd)
     return os.path.join(tmpdir, name)
